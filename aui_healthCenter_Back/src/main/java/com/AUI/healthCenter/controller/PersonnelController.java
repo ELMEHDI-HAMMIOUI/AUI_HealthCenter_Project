@@ -1,12 +1,15 @@
+
 package com.AUI.healthCenter.controller;
 
-import com.AUI.healthCenter.models.dto.PersonnelDTO;
 import com.AUI.healthCenter.models.entities.Personnel;
 import com.AUI.healthCenter.services.PersonnelService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -17,22 +20,22 @@ public class PersonnelController {
     private PersonnelService personnelService;
 
     @GetMapping
-    public List<PersonnelDTO> getAllPersonnels() {
+    public List<Personnel> getAllPersonnels() {
         return personnelService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Optional<PersonnelDTO> getPersonnelById(@PathVariable Integer id) {
+    public Optional<Personnel> getPersonnelById(@PathVariable Integer id) {
         return personnelService.findById(id);
     }
 
     @PostMapping
-    public PersonnelDTO createPersonnel(@RequestBody PersonnelDTO personnel) {
+    public Personnel createPersonnel(@RequestBody Personnel personnel) {
         return personnelService.save(personnel);
     }
 
     @PutMapping("/{id}")
-    public PersonnelDTO updatePersonnel(@PathVariable Integer id, @RequestBody PersonnelDTO personnel) {
+    public Personnel updatePersonnel(@PathVariable Integer id, @RequestBody Personnel personnel) {
         return personnelService.update(id, personnel);
     }
 
@@ -40,4 +43,19 @@ public class PersonnelController {
     public void deletePersonnel(@PathVariable Integer id) {
         personnelService.deleteById(id);
     }
+    @PostMapping("/login")
+    public ResponseEntity<Personnel> login(@RequestBody Map<String, String> credentials) {
+        String username = credentials.get("username");
+        String passwd = credentials.get("passwd");
+        Optional<Personnel> personnel = personnelService.findByUsernameAndPasswd(username, passwd);
+        if (personnel.isPresent()) {
+            Personnel p = personnel.get();
+            p.setPasswd(null);
+            return ResponseEntity.ok(p);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    
 }

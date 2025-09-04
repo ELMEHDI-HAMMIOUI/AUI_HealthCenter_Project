@@ -29,9 +29,7 @@ public class SortieStock {
     @JoinColumn(name = "id_medicament", nullable = false)
     private Medicament medicament;
 
-    private Integer prixUnite;
-    private LocalDate dateExpiration;
-    private Integer perUnite;//0 oui 1 non
-    private Integer qte;//si perUnite = 0, c'est la quantité de médicaments sortis, sinon c'est le nombre de paquets sortis
+    private Boolean parUnite; // true = par unité, false = par paquet
+    private Integer quantite; // dépend de parUnite
     private LocalDate dateSortie;
 }

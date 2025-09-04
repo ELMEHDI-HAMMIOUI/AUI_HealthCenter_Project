@@ -1,5 +1,6 @@
 package com.AUI.healthCenter.models.entities;
 
+import com.AUI.healthCenter.models.Enum.ETypePaient;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,4 +23,6 @@ public class Patient {
     private String sexe;
     private String telephone;
     private String email;
+    private String departement;
+    private ETypePaient typePatient;
 }

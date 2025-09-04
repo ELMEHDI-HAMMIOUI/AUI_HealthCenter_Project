@@ -2,7 +2,9 @@ package com.AUI.healthCenter.services;
 
 import com.AUI.healthCenter.models.entities.Medicament;
 import com.AUI.healthCenter.models.entities.SortieStock;
+import com.AUI.healthCenter.repositories.MedicamentRepository;
 import com.AUI.healthCenter.repositories.SortieStockRepository;
+import org.antlr.v4.runtime.misc.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +13,8 @@ import java.util.Optional;
 
 @Service
 public class SortieStockService {
-
+    @Autowired
+    private MedicamentRepository medicamentRepository;
     @Autowired
     private SortieStockRepository sortieStockRepository;
     @Autowired
@@ -27,34 +30,32 @@ public class SortieStockService {
 
     public SortieStock save(SortieStock sortieStock) {
         Medicament medicament = sortieStock.getMedicament();
-        Integer qteSortie = sortieStock.getQte();
-
-        if (sortieStock.getPerUnite() == 0) {
-            // Sortie par unités
-            int qteCourante = medicament.getCompteurPiles() + qteSortie;
-            int paquetsUtilises = qteCourante / medicament.getDefaultSize();
-            int reste = qteCourante % medicament.getDefaultSize();
-
-            if (medicament.getQteStock() < paquetsUtilises) {
-                throw new RuntimeException("Stock insuffisant (en paquets) !");
-            }
-
-            medicament.setQteStock(medicament.getQteStock() - paquetsUtilises);
-            medicament.setCompteurPiles(reste);
-
-        } else if (sortieStock.getPerUnite() == 1) {
-            // Sortie par paquets
-            if (medicament.getQteStock() < qteSortie) {
-                throw new RuntimeException("Stock insuffisant (en paquets) !");
-            }
-
-            medicament.setQteStock(medicament.getQteStock() - qteSortie);
+        if (medicament.getQteStock() == 0) {
+            return null; // Stock épuisé
         }
 
-        medicamentService.save(medicament);
+        if (sortieStock.getParUnite()) {
+            medicament.setCompteurPiles(medicament.getCompteurPiles() + sortieStock.getQuantite());
+            if (medicament.getCompteurPiles() >= medicament.getDefaultSize()) {
+                medicament.setCompteurPiles(0);
+                medicament.setQteStock(medicament.getQteStock() - 1);
+                if (medicament.getQteStock() < 0) {
+                    medicament.setQteStock(0);
+                    return null;
+                }
+            }
+        } else { // sortie par paquet
+            medicament.setQteStock(medicament.getQteStock() - sortieStock.getQuantite());
+            if (medicament.getQteStock() < 0) {
+                medicament.setQteStock(0);
+                return null;
+            }
+        }
 
-        // Sauvegarde de la sortie
+
+        medicamentRepository.save(medicament);
         return sortieStockRepository.save(sortieStock);
+
     }
 
 

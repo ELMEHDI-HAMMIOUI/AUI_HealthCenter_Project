@@ -17,4 +17,7 @@ public class Fournisseur {
     private String adresse;
     private String telephone;
     private String email;
+    private String dateJointure;
+    private String typeFournisseur;
+    private String status;
 }

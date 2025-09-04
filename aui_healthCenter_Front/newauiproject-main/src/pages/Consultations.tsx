@@ -1,26 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Calendar, User, FileText, Pill, Clock, Eye, Edit, Trash2 } from 'lucide-react';
 import Modal from '../components/Modal';
-import ConsultationForm from '../components/ConsultationForm';
+import ConsultationBackendForm from '../components/ConsultationBackendForm';
+import SortieStockForm from '../components/SortieStockForm';
+import MultiSortieStockForm from '../components/MultiSortieStockForm';
 import { useAuth } from '../context/AuthContext';
-
-interface Patient {
-  id: string;
-  studentId: string;
-  name: string;
-  email: string;
-  phone: string;
-  allergies: string;
-  conditions: string;
-}
-
-interface Medicine {
-  id: string;
-  name: string;
-  dosage: string;
-  form: string;
-  stockLevel: number;
-}
 
 interface PrescriptionItem {
   medicineId: string;
@@ -31,193 +15,134 @@ interface PrescriptionItem {
   instructions: string;
 }
 
-interface Consultation {
-  id: string;
-  patientId: string;
+interface ConsultationRow {
+  id: number;
+  patientId: number;
   patientName: string;
-  patientStudentId: string;
   doctorName: string;
-  consultationDate: string;
-  consultationTime: string;
-  notes: string;
-  prescriptionItems: PrescriptionItem[];
+  consultationDate: string; // ISO
+  notes: string; // mapped from motif/diagnostic/traitement
   status: 'COMPLETED' | 'PENDING' | 'FOLLOW_UP';
-  createdAt: string;
-  updatedAt: string;
+  prescriptionItems: PrescriptionItem[]; // optional visualization
 }
 
 const Consultations = () => {
   const { user } = useAuth();
-  const [consultations, setConsultations] = useState<Consultation[]>([
-    {
-      id: '1',
-      patientId: 'P001',
-      patientName: 'Omar Benali',
-      patientStudentId: 'STU001',
-      doctorName: 'Dr. Fatima Alaoui',
-      consultationDate: '2024-01-20',
-      consultationTime: '10:30',
-      notes: 'Patient presented with severe headache and fever. Symptoms started 3 days ago. No signs of complications. Prescribed paracetamol for symptom relief.',
-      prescriptionItems: [
-        {
-          medicineId: '1',
-          medicineName: 'Paracetamol 500mg',
-          dosage: '500mg',
-          frequency: '3 times daily',
-          duration: '7 days',
-          instructions: 'Take with food. Do not exceed 4g per day.'
-        }
-      ],
-      status: 'COMPLETED',
-      createdAt: '2024-01-20T10:30:00Z',
-      updatedAt: '2024-01-20T10:45:00Z'
-    },
-    {
-      id: '2',
-      patientId: 'P002',
-      patientName: 'Sara Amrani',
-      patientStudentId: 'STU002',
-      doctorName: 'Dr. Ahmed Bennani',
-      consultationDate: '2024-01-19',
-      consultationTime: '14:15',
-      notes: 'Follow-up consultation for back pain. Patient reports improvement with previous treatment. Continue with current medication and add physiotherapy recommendations.',
-      prescriptionItems: [
-        {
-          medicineId: '2',
-          medicineName: 'Ibuprofen 400mg',
-          dosage: '400mg',
-          frequency: '2 times daily',
-          duration: '10 days',
-          instructions: 'Take after meals. Avoid if stomach upset occurs.'
-        }
-      ],
-      status: 'FOLLOW_UP',
-      createdAt: '2024-01-19T14:15:00Z',
-      updatedAt: '2024-01-19T14:30:00Z'
-    },
-    {
-      id: '3',
-      patientId: 'P003',
-      patientName: 'Youssef Idrissi',
-      patientStudentId: 'STU003',
-      doctorName: 'Dr. Fatima Alaoui',
-      consultationDate: '2024-01-18',
-      consultationTime: '09:00',
-      notes: 'Initial consultation for allergic reaction. Patient allergic to aspirin. Prescribed alternative pain relief. Advised to update medical records.',
-      prescriptionItems: [
-        {
-          medicineId: '1',
-          medicineName: 'Paracetamol 500mg',
-          dosage: '500mg',
-          frequency: 'As needed',
-          duration: '5 days',
-          instructions: 'Maximum 4 times per day. Safe alternative to aspirin.'
-        }
-      ],
-      status: 'COMPLETED',
-      createdAt: '2024-01-18T09:00:00Z',
-      updatedAt: '2024-01-18T09:20:00Z'
-    }
-  ]);
-
+  const [consultations, setConsultations] = useState<ConsultationRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'PENDING' | 'FOLLOW_UP'>('ALL');
   const [dateFilter, setDateFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
-  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [editingConsultation, setEditingConsultation] = useState<ConsultationRow | null>(null);
+  const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRow | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isSortieModalOpen, setIsSortieModalOpen] = useState(false);
+  const [sortieConsultationId, setSortieConsultationId] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
-  // Mock data for patients and medicines
-  const patients: Patient[] = [
-    {
-      id: 'P001',
-      studentId: 'STU001',
-      name: 'Omar Benali',
-      email: 'omar.benali@aui.ma',
-      phone: '+212 6 12 34 56 78',
-      allergies: 'Penicillin',
-      conditions: 'None'
-    },
-    {
-      id: 'P002',
-      studentId: 'STU002',
-      name: 'Sara Amrani',
-      email: 'sara.amrani@aui.ma',
-      phone: '+212 6 98 76 54 32',
-      allergies: 'None',
-      conditions: 'Asthma'
-    },
-    {
-      id: 'P003',
-      studentId: 'STU003',
-      name: 'Youssef Idrissi',
-      email: 'youssef.idrissi@aui.ma',
-      phone: '+212 6 55 44 33 22',
-      allergies: 'Aspirin',
-      conditions: 'None'
+  const fetchConsultations = async () => {
+    try {
+      setError('');
+      const res = await fetch('/api/consultations');
+      if (!res.ok) throw new Error('Failed to fetch consultations');
+      const data = await res.json();
+      const rows: ConsultationRow[] = data.map((c: any) => ({
+        id: c.id,
+        patientId: c.patient?.id,
+        patientName: `${c.patient?.prenom || ''} ${c.patient?.nom || ''}`.trim() || `Patient #${c.patient?.id}`,
+        doctorName: `${c.personnel?.prenom || ''} ${c.personnel?.nom || ''}`.trim() || 'Médecin',
+        consultationDate: c.dateConsultation,
+        notes: [c.motif, c.diagnostic, c.traitement].filter(Boolean).join(' | '),
+        status: 'COMPLETED',
+        prescriptionItems: []
+      }));
+      setConsultations(rows);
+    } catch (e) {
+      console.error(e);
+      setError('Erreur lors du chargement des consultations');
     }
-  ];
+  };
 
-  const medicines: Medicine[] = [
-    { id: '1', name: 'Paracetamol 500mg', dosage: '500mg', form: 'Tablet', stockLevel: 150 },
-    { id: '2', name: 'Ibuprofen 400mg', dosage: '400mg', form: 'Tablet', stockLevel: 75 },
-    { id: '3', name: 'Amoxicillin 250mg', dosage: '250mg', form: 'Capsule', stockLevel: 80 },
-    { id: '4', name: 'Aspirin 325mg', dosage: '325mg', form: 'Tablet', stockLevel: 120 },
-    { id: '5', name: 'Omeprazole 20mg', dosage: '20mg', form: 'Capsule', stockLevel: 60 }
-  ];
+  useEffect(() => {
+    fetchConsultations();
+  }, []);
 
   const filteredConsultations = consultations.filter(consultation => {
     const matchesSearch = consultation.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         consultation.patientStudentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          consultation.doctorName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || consultation.status === statusFilter;
-    const matchesDate = !dateFilter || consultation.consultationDate === dateFilter;
+    const matchesDate = !dateFilter || (consultation.consultationDate || '').slice(0,10) === dateFilter;
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  const handleAddConsultation = (consultationData: Omit<Consultation, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newConsultation: Consultation = {
-      ...consultationData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setConsultations([newConsultation, ...consultations]);
-    setIsModalOpen(false);
+  const readErrorText = async (res: Response) => {
+    try {
+      const txt = await res.text();
+      return txt || res.statusText;
+    } catch {
+      return res.statusText;
+    }
   };
 
-  const handleEditConsultation = (consultationData: Omit<Consultation, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editingConsultation) {
-      setConsultations(consultations.map(consultation => 
-        consultation.id === editingConsultation.id 
-          ? { 
-              ...consultationData, 
-              id: editingConsultation.id,
-              createdAt: editingConsultation.createdAt,
-              updatedAt: new Date().toISOString()
-            }
-          : consultation
-      ));
+  const handleAddConsultation = async (payload: any) => {
+    try {
+      const res = await fetch('/api/consultations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, id: null })
+      });
+      if (!res.ok) throw new Error(`Create failed (${res.status}): ${await readErrorText(res)}`);
+      setIsModalOpen(false);
+      await fetchConsultations();
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : 'Erreur lors de la création de la consultation');
+    }
+  };
+
+  const handleEditConsultation = async (payload: any) => {
+    if (!editingConsultation) return;
+    try {
+      const res = await fetch(`/api/consultations/${editingConsultation.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, id: editingConsultation.id })
+      });
+      if (!res.ok) throw new Error(`Update failed (${res.status}): ${await readErrorText(res)}`);
       setEditingConsultation(null);
       setIsModalOpen(false);
+      await fetchConsultations();
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : 'Erreur lors de la mise à jour de la consultation');
     }
   };
 
-  const handleDeleteConsultation = (id: string) => {
-    if (confirm('Are you sure you want to delete this consultation?')) {
-      setConsultations(consultations.filter(consultation => consultation.id !== id));
+  const handleDeleteConsultation = async (id: number) => {
+    if (!confirm('Supprimer cette consultation ?')) return;
+    try {
+      const res = await fetch(`/api/consultations/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Delete failed (${res.status}): ${await readErrorText(res)}`);
+      await fetchConsultations();
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : 'Erreur lors de la suppression');
     }
   };
 
-  const openEditModal = (consultation: Consultation) => {
+  const openEditModal = (consultation: ConsultationRow) => {
     setEditingConsultation(consultation);
     setIsModalOpen(true);
   };
 
-  const openViewModal = (consultation: Consultation) => {
+  const openViewModal = (consultation: ConsultationRow) => {
     setSelectedConsultation(consultation);
     setIsViewModalOpen(true);
+  };
+
+  const openSortieModal = (consultation: ConsultationRow) => {
+    setSortieConsultationId(consultation.id);
+    setIsSortieModalOpen(true);
   };
 
   const closeModal = () => {
@@ -228,6 +153,26 @@ const Consultations = () => {
   const closeViewModal = () => {
     setIsViewModalOpen(false);
     setSelectedConsultation(null);
+  };
+
+  const closeSortieModal = () => {
+    setIsSortieModalOpen(false);
+    setSortieConsultationId(null);
+  };
+
+  const handleCreateSortie = async (payload: any) => {
+    try {
+      const res = await fetch('/api/sortie-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Sortie failed (${res.status}): ${await readErrorText(res)}`);
+      setIsSortieModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      setError(e instanceof Error ? e.message : 'Erreur lors de la création de la sortie de stock');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -282,6 +227,10 @@ const Consultations = () => {
           <span>New Consultation</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 whitespace-pre-wrap">{error}</div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -340,7 +289,7 @@ const Consultations = () => {
               <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by patient name, student ID, or doctor..."
+                placeholder="Search by patient or doctor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -383,9 +332,6 @@ const Consultations = () => {
                   Date & Time
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Prescriptions
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -403,7 +349,6 @@ const Consultations = () => {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{consultation.patientName}</div>
-                        <div className="text-sm text-gray-500">{consultation.patientStudentId}</div>
                       </div>
                     </div>
                   </td>
@@ -412,16 +357,7 @@ const Consultations = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {new Date(consultation.consultationDate).toLocaleDateString()}
-                    </div>
-                    <div className="text-sm text-gray-500">{consultation.consultationTime}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-1">
-                      <Pill className="w-4 h-4 text-green-600" />
-                      <span className="text-sm text-gray-900">
-                        {consultation.prescriptionItems.length} item(s)
-                      </span>
+                      {new Date(consultation.consultationDate).toLocaleString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -442,6 +378,13 @@ const Consultations = () => {
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openSortieModal(consultation)}
+                        className="text-purple-600 hover:text-purple-900 transition-colors"
+                        title="Sortie de stock"
+                      >
+                        <Pill className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteConsultation(consultation.id)}
@@ -473,110 +416,54 @@ const Consultations = () => {
         )}
       </div>
 
-      {/* Add/Edit Consultation Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingConsultation ? 'Edit Consultation' : 'New Consultation'}
       >
-        <ConsultationForm
-          initialData={editingConsultation}
-          patients={patients}
-          medicines={medicines}
-          currentUser={user}
+        <ConsultationBackendForm
+          personnelId={user?.id as number}
+          initial={editingConsultation ? {
+            id: editingConsultation.id,
+            patient: { id: editingConsultation.patientId },
+            personnel: { id: user?.id as number },
+            dateConsultation: editingConsultation.consultationDate,
+            motif: editingConsultation.notes,
+            diagnostic: '',
+            traitement: ''
+          } : null}
           onSubmit={editingConsultation ? handleEditConsultation : handleAddConsultation}
           onCancel={closeModal}
         />
       </Modal>
 
-      {/* View Consultation Modal */}
       <Modal
         isOpen={isViewModalOpen}
         onClose={closeViewModal}
         title="Consultation Details"
       >
         {selectedConsultation && (
-          <div className="space-y-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Patient Information</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Name:</span>
-                  <p className="text-gray-900">{selectedConsultation.patientName}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Student ID:</span>
-                  <p className="text-gray-900">{selectedConsultation.patientStudentId}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Consultation Details</h3>
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="font-medium text-gray-700">Doctor:</span>
-                    <p className="text-gray-900">{selectedConsultation.doctorName}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Date & Time:</span>
-                    <p className="text-gray-900">
-                      {new Date(selectedConsultation.consultationDate).toLocaleDateString()} at {selectedConsultation.consultationTime}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Notes:</span>
-                  <p className="text-gray-900 mt-1">{selectedConsultation.notes}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-green-50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Prescriptions</h3>
-              <div className="space-y-3">
-                {selectedConsultation.prescriptionItems.map((item, index) => (
-                  <div key={index} className="border border-green-200 rounded-lg p-3 bg-white">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Pill className="w-4 h-4 text-green-600" />
-                      <span className="font-medium text-gray-900">{item.medicineName}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Dosage:</span>
-                        <span className="ml-2 text-gray-900">{item.dosage}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Frequency:</span>
-                        <span className="ml-2 text-gray-900">{item.frequency}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Duration:</span>
-                        <span className="ml-2 text-gray-900">{item.duration}</span>
-                      </div>
-                    </div>
-                    {item.instructions && (
-                      <div className="mt-2 text-sm">
-                        <span className="text-gray-600">Instructions:</span>
-                        <p className="text-gray-900 mt-1">{item.instructions}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end pt-4 border-t border-gray-200">
-              <button
-                onClick={closeViewModal}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
+          <div className="space-y-3 text-sm">
+            <div><span className="font-medium">Patient:</span> {selectedConsultation.patientName}</div>
+            <div><span className="font-medium">Doctor:</span> {selectedConsultation.doctorName}</div>
+            <div><span className="font-medium">Date & Time:</span> {new Date(selectedConsultation.consultationDate).toLocaleString()}</div>
+            <div><span className="font-medium">Notes:</span> {selectedConsultation.notes}</div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={isSortieModalOpen}
+        onClose={closeSortieModal}
+        title="Ajouter des Médicaments"
+      >
+        {sortieConsultationId && (
+          <MultiSortieStockForm
+            consultationId={sortieConsultationId}
+            onSubmitted={() => { closeSortieModal(); }}
+            onCancel={closeSortieModal}
+          />)
+        }
       </Modal>
     </div>
   );

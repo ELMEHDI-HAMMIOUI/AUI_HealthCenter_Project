@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GraduationCap, Mail, Lock, AlertCircle } from 'lucide-react';
+import { GraduationCap, User, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,13 +14,17 @@ const Login = () => {
     setIsLoading(true);
     setError('');
 
-    const success = await login(email, password);
-    
-    if (!success) {
-      setError('Invalid email or password');
+    try {
+      const result = await login(username, password);
+      
+      if (!result.success) {
+        setError(result.error || 'Login failed. Please try again.');
+      }
+    } catch (error) {
+      setError('An error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -32,7 +36,7 @@ const Login = () => {
               <GraduationCap className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">AUI Health Center</h1>
-            <p className="text-gray-600">Pharmacy Management System</p>
+            <p className="text-gray-600">Healthcare Management System</p>
           </div>
 
           {error && (
@@ -45,21 +49,21 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                Username
               </label>
               <div className="relative">
-                <Mail className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <User className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="your.email@aui.ma"
+                  placeholder="Enter your username"
                   required
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Demo: Use any email (try "student@aui.ma" for student view)
+                Demo: Use "med" for testing
               </p>
             </div>
 
@@ -79,7 +83,7 @@ const Login = () => {
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Demo: Use any password
+                Demo: Use "med" for testing
               </p>
             </div>
 

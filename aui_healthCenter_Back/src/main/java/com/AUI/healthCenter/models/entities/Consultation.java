@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(name = "consultation")
 public class Consultation {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne
@@ -25,7 +27,9 @@ public class Consultation {
     private Personnel personnel;
 
     private LocalDateTime dateConsultation;
-    private String diagnostic;
-    private String traitement;
+
+    private String motif;          // Raison de la visite
+    private String diagnostic;     // Diagnostic du médecin
+    private String traitement;     // Prescription ou traitement proposé
 }
 

@@ -4,15 +4,23 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Consultations from './pages/Consultations';
 import Medicines from './pages/Medicines';
-import StockManagement from './pages/StockManagement';
+
+import EntryStock from './pages/EntryStock';
+import ExitStock from './pages/ExitStock';
 import Students from './pages/Students';
+import Patients from './pages/Patients';
 import Suppliers from './pages/Suppliers';
 import Reports from './pages/Reports';
 import Personnel from './pages/Personnel';
 import StudentPortal from './pages/StudentPortal';
+import Profile from './pages/Profile';
+import MedicinesList from './pages/MedicinesList';
+import MedicineDetails from './pages/MedicineDetails';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UserRole } from './types/roles';
+import ConsultationDetails from './pages/ConsultationDetails';
 
 function AppContent() {
   const { user, isAuthenticated } = useAuth();
@@ -21,7 +29,8 @@ function AppContent() {
     return <Login />;
   }
 
-  const isStudent = user?.role === 'STUDENT';
+  const isAdmin = user?.role === UserRole.ADMIN;
+  const isMedecin = user?.role === UserRole.MEDECIN || user?.role === UserRole.INFIRMIER;
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -32,18 +41,35 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            {!isStudent && (
+            <Route path="/profile" element={<Profile />} />
+            
+            {/* Admin Routes */}
+            {isAdmin && (
               <>
-                <Route path="/consultations" element={<Consultations />} />
                 <Route path="/medicines" element={<Medicines />} />
-                <Route path="/stock" element={<StockManagement />} />
-                <Route path="/students" element={<Students />} />
+                <Route path="/medicines/:id" element={<MedicineDetails />} />
+
+                <Route path="/entry-stock" element={<EntryStock />} />
+                <Route path="/exit-stock" element={<ExitStock />} />
                 <Route path="/suppliers" element={<Suppliers />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/personnel" element={<Personnel />} />
               </>
             )}
-            <Route path="/student-portal" element={<StudentPortal />} />
+            
+            {/* Doctor/Nurse Routes */}
+            {isMedecin && (
+              <>
+                <Route path="/consultations" element={<Consultations />} />
+                <Route path="/consultations/:id" element={<ConsultationDetails />} />
+                <Route path="/patients" element={<Patients />} />
+                <Route path="/medicines-list" element={<MedicinesList />} />
+                <Route path="/medicines/:id" element={<MedicineDetails />} />
+              </>
+            )}
+            
+            {/* Fallback for unknown routes */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
       </div>

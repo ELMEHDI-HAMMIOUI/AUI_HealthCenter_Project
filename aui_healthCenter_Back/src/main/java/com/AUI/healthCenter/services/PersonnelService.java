@@ -1,14 +1,12 @@
 package com.AUI.healthCenter.services;
 
 import com.AUI.healthCenter.models.entities.Personnel;
-import com.AUI.healthCenter.models.dto.PersonnelDTO;
 import com.AUI.healthCenter.repositories.PersonnelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class PersonnelService {
@@ -16,32 +14,27 @@ public class PersonnelService {
     @Autowired
     private PersonnelRepository personnelRepository;
 
-    public List<PersonnelDTO> findAll() {
-        return personnelRepository.findAll()
-                .stream()
-                .map(PersonnelDTO::fromEntity)
-                .collect(Collectors.toList());
+    public List<Personnel> findAll() {
+        return personnelRepository.findAll();
     }
 
-    public Optional<PersonnelDTO> findById(Integer id) {
-        return personnelRepository.findById(id)
-                .map(PersonnelDTO::fromEntity);
+    public Optional<Personnel> findById(Integer id) {
+        return personnelRepository.findById(id);
     }
 
-    public PersonnelDTO save(PersonnelDTO personnelDTO) {
-        Personnel personnel = PersonnelDTO.toEntity(personnelDTO);
-        Personnel saved = personnelRepository.save(personnel);
-        return PersonnelDTO.fromEntity(saved);
+    public Personnel save(Personnel personnel) {
+        return personnelRepository.save(personnel);
     }
 
-    public PersonnelDTO update(Integer id, PersonnelDTO personnelDTO) {
-        Personnel personnel = PersonnelDTO.toEntity(personnelDTO);
+    public Personnel update(Integer id, Personnel personnel) {
         personnel.setId(id);
-        Personnel updated = personnelRepository.save(personnel);
-        return PersonnelDTO.fromEntity(updated);
+        return personnelRepository.save(personnel);
     }
 
     public void deleteById(Integer id) {
         personnelRepository.deleteById(id);
+    }
+    public Optional<Personnel> findByUsernameAndPasswd(String username, String passwd) {
+        return personnelRepository.findByUsernameAndPasswd(username, passwd);
     }
 }

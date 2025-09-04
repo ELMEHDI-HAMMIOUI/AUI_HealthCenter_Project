@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
 interface Supplier {
-  id: string;
-  nom: string;
+  id: number;
+  nomFournisseur: string;
   adresse: string;
   telephone: string;
   email: string;
-  contact: string;
-  specialite: string;
-  dateCreation: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  dateJointure: string;
+  typeFournisseur: string;
+  status: string;
 }
 
 interface SupplierFormProps {
@@ -20,26 +19,24 @@ interface SupplierFormProps {
 
 const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    nom: '',
+    nomFournisseur: '',
     adresse: '',
     telephone: '',
     email: '',
-    contact: '',
-    specialite: '',
-    dateCreation: new Date().toISOString().split('T')[0],
-    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE'
+    dateJointure: new Date().toISOString().split('T')[0],
+    typeFournisseur: '',
+    status: 'ACTIVE' // Default status
   });
 
   useEffect(() => {
     if (initialData) {
       setFormData({
-        nom: initialData.nom,
+        nomFournisseur: initialData.nomFournisseur,
         adresse: initialData.adresse,
         telephone: initialData.telephone,
         email: initialData.email,
-        contact: initialData.contact,
-        specialite: initialData.specialite,
-        dateCreation: initialData.dateCreation,
+        dateJointure: initialData.dateJointure,
+        typeFournisseur: initialData.typeFournisseur,
         status: initialData.status
       });
     }
@@ -58,7 +55,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmit, onCa
     }));
   };
 
-  const specialties = [
+  const supplierTypes = [
     'Médicaments génériques',
     'Médicaments spécialisés',
     'Équipements médicaux',
@@ -77,8 +74,8 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmit, onCa
         </label>
         <input
           type="text"
-          name="nom"
-          value={formData.nom}
+          name="nomFournisseur"
+          value={formData.nomFournisseur}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           required
@@ -131,12 +128,32 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmit, onCa
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Contact Person *
+          Supplier Type *
+        </label>
+        <select
+          name="typeFournisseur"
+          value={formData.typeFournisseur}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          required
+        >
+          <option value="">Select supplier type</option>
+          {supplierTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Join Date *
         </label>
         <input
-          type="text"
-          name="contact"
-          value={formData.contact}
+          type="date"
+          name="dateJointure"
+          value={formData.dateJointure}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           required
@@ -145,53 +162,20 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ initialData, onSubmit, onCa
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Specialty *
+          Status *
         </label>
         <select
-          name="specialite"
-          value={formData.specialite}
+          name="status"
+          value={formData.status}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           required
         >
-          <option value="">Select specialty</option>
-          {specialties.map((specialty) => (
-            <option key={specialty} value={specialty}>
-              {specialty}
-            </option>
-          ))}
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+          <option value="PENDING">Pending</option>
+          <option value="SUSPENDED">Suspended</option>
         </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Registration Date *
-          </label>
-          <input
-            type="date"
-            name="dateCreation"
-            value={formData.dateCreation}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Status *
-          </label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          >
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
-        </div>
       </div>
 
       <div className="flex items-center justify-end space-x-3 pt-4">

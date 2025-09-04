@@ -24,6 +24,7 @@ public class EntreStock {
     private Fournisseur fournisseur;
     private LocalDate dateEntre;
     private Integer qte;
+    private Double unite_prix;
     private String badge;
 }
 

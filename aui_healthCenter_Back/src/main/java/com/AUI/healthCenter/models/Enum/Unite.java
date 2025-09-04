@@ -7,6 +7,5 @@ public enum Unite {
     L,  // litre
     UI, // unité internationale
     TABLETTE,
-    CAPSULE,
     AUTRE
 }

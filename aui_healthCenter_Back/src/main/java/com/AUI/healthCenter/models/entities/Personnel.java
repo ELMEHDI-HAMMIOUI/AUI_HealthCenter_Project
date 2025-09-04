@@ -1,6 +1,7 @@
 package com.AUI.healthCenter.models.entities;
 
 
+import com.AUI.healthCenter.models.Enum.ERole;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,9 +19,10 @@ public class Personnel {
     private String prenom;
     private String username;
     private String passwd;
-    private String role;
+    private ERole role;
     private String specialite;
     private String telephone;
     private String email;
+    private String status;
 }
 

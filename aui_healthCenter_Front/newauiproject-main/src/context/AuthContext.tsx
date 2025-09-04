@@ -1,17 +1,30 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { UserRole, UserStatus, isValidRole } from '../types/roles';
 
 interface User {
-  id: string;
-  name: string;
+  id: number;
+  nom: string;
+  prenom: string;
+  username: string;
+  passwd: string;
+  role: UserRole;
+  specialite: string;
+  telephone: string;
   email: string;
-  role: 'ADMIN' | 'PHARMACIST' | 'STAFF' | 'STUDENT';
+  status: UserStatus;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateProfile: (userData: Partial<User>) => Promise<boolean>;
+  hasRole: (role: UserRole) => boolean;
+  hasAnyRole: (roles: UserRole[]) => boolean;
+  isAdmin: () => boolean;
+  isMedecin: () => boolean;
+  isInfirmier: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,30 +49,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // TODO: Replace with actual API call to Spring Boot backend
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password })
-      // });
+      const response = await fetch('/api/personnels/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, passwd: password })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { success: false, error: 'Invalid username or password' };
+        } else if (response.status === 500) {
+          return { success: false, error: 'Server error. Please try again later.' };
+        } else {
+          return { success: false, error: `Login failed with status: ${response.status}` };
+        }
+      }
+
+      const userData = await response.json();
       
-      // Mock authentication for demo
-      const mockUser: User = {
-        id: '1',
-        name: 'Dr. Ahmed Alami',
-        email: email,
-        role: email.includes('student') ? 'STUDENT' : 'ADMIN'
-      };
+      // Validate that the role from backend is valid
+      if (!isValidRole(userData.role)) {
+        console.error('Invalid role received from backend:', userData.role);
+        return { success: false, error: 'Invalid user role received from server' };
+      }
       
-      setUser(mockUser);
+      // Don't store password in localStorage
+      const userToStore = { ...userData, passwd: null };
+      
+      setUser(userToStore);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return true;
+      localStorage.setItem('user', JSON.stringify(userToStore));
+      return { success: true };
     } catch (error) {
       console.error('Login failed:', error);
-      return false;
+      return { success: false, error: 'An unexpected error occurred during login.' };
     }
   };
 
@@ -69,8 +94,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('user');
   };
 
+  const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Build payload and omit passwd when not provided/empty to avoid nulling it server-side
+      const payload: any = { ...user, ...userData };
+      if (!userData.passwd || userData.passwd.toString().trim() === '') {
+        delete payload.passwd;
+      }
+
+      const response = await fetch(`/api/personnels/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Profile update failed');
+      }
+
+      const updatedUser = await response.json();
+      const userToStore = { ...updatedUser, passwd: null };
+      
+      setUser(userToStore);
+      localStorage.setItem('user', JSON.stringify(userToStore));
+      return true;
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      return false;
+    }
+  };
+
+  const hasRole = (role: UserRole) => {
+    return user?.role === role;
+  };
+
+  const hasAnyRole = (roles: UserRole[]) => {
+    return roles.some(role => hasRole(role));
+  };
+
+  const isAdmin = () => {
+    return hasRole(UserRole.ADMIN);
+  };
+
+  const isMedecin = () => {
+    return hasRole(UserRole.MEDECIN);
+  };
+
+  const isInfirmier = () => {
+    return hasRole(UserRole.INFIRMIER);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, updateProfile, hasRole, hasAnyRole, isAdmin, isMedecin, isInfirmier }}>
       {children}
     </AuthContext.Provider>
   );

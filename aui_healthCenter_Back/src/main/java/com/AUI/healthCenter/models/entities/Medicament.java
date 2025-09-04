@@ -3,7 +3,6 @@ package com.AUI.healthCenter.models.entities;
 import com.AUI.healthCenter.models.Enum.*;
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Entity
@@ -23,19 +22,16 @@ public class Medicament {
 
         private String codeBarre39;
 
-        @Enumerated(EnumType.STRING)
-        private FormeMedicament forme;
+        //true or false
+        private Boolean perPile; // true si le médicament est vendu à l'unité, false si en paquet
 
         @Enumerated(EnumType.STRING)
         private CategorieMedicament categorie; // Anti-inflammatoire, etc.
 
-        private Integer dosageTaille; // 500 par exemple
+        private Double dosage; // 500 par exemple
         @Enumerated(EnumType.STRING)
         private Unite uniteDosage; // mg, ml...
 
-        private Integer poidsTaille; // 200
-        @Enumerated(EnumType.STRING)
-        private Unite unitePoids; // g, ml...
 
 
         private Integer defaultSize; // nombre d'unités par paquet

@@ -1,9 +1,9 @@
 # 🏥 AUI Health Center Management System
 
-![GitHub repo size](https://img.shields.io/github/repo-size/your-username/aui-health-center)
-![GitHub contributors](https://img.shields.io/github/contributors/your-username/aui-health-center)
-![GitHub stars](https://img.shields.io/github/stars/your-username/aui-health-center?style=social)
-![GitHub forks](https://img.shields.io/github/forks/your-username/aui-health-center?style=social)
+![GitHub repo size](https://img.shields.io/github/repo-size/ELMEHDI-HAMMIOUI/AUI_HealthCenter_Project)
+![GitHub contributors](https://img.shields.io/github/contributors/ELMEHDI-HAMMIOUI/AUI_HealthCenter_Project)
+![GitHub stars](https://img.shields.io/github/stars/ELMEHDI-HAMMIOUI/AUI_HealthCenter_Project?style=social)
+![GitHub forks](https://img.shields.io/github/forks/ELMEHDI-HAMMIOUI/AUI_HealthCenter_Project?style=social)
 
 > A web-based application designed to **digitalize the healthcare management process** at the Al Akhawayn University Health Center.  
 > It simplifies appointment scheduling, patient record management, and medical follow-up for both students and staff.
